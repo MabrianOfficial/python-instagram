@@ -96,7 +96,9 @@ class Media(ApiModel):
 
         new_media.comment_count = entry['comments']['count']
         new_media.comments = []
-        for comment in entry['comments']['data']:
+        #Comments not always has data attribute -> http://stackoverflow.com/questions/33924581/keyerror-data-with-python-instagram-api-client
+        #for comment in entry['comments']['data']:
+        for comment in entry['comments'].get('data',[]):
             new_media.comments.append(Comment.object_from_dictionary(comment))
 
         new_media.users_in_photo = []
