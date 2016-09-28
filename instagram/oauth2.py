@@ -109,7 +109,9 @@ class OAuth2AuthExchangeRequest(object):
         data = self._data_for_exchange(code, username, password, scope=scope, user_id=user_id)
         http_object = Http(disable_ssl_certificate_validation=True)
         url = self.api.access_token_url
-        response, content = http_object.request(url, method="POST", body=data)
+        ##FIX python-instagram get_token: http://stackoverflow.com/a/38011465/2873381
+        headers = {'Content-Type':'application/x-www-form-urlencoded'}
+        response, content = http_object.request(url, method="POST", body=data,headers=headers)
         parsed_content = simplejson.loads(content.decode())
         if int(response['status']) != 200:
             raise OAuth2AuthExchangeError(parsed_content.get("error_message", ""))
