@@ -9,7 +9,12 @@ class ApiModel(object):
         if entry is None:
             return ""
         entry_str_dict = dict([(str(key), value) for key, value in entry.items()])
-        return cls(**entry_str_dict)
+        object = cls(**entry_str_dict)
+        object._api_dict = entry
+        return object
+    
+    def object_to_dictionary(self):
+        return self._api_dict
 
     def __repr__(self):
         return unicode(self).encode('utf8')
@@ -62,6 +67,7 @@ class Media(ApiModel):
     @classmethod
     def object_from_dictionary(cls, entry):
         new_media = Media(id=entry['id'])
+        new_media._api_dict = entry
         new_media.type = entry['type']
 
         new_media.user = User.object_from_dictionary(entry['user'])
@@ -93,7 +99,12 @@ class Media(ApiModel):
             new_media.comments.append(Comment.object_from_dictionary(comment))
 
         new_media.created_time = timestamp_to_datetime(entry['created_time'])
-
+        
+        new_media.users_in_photo = []
+        if entry.get('users_in_photo'):
+            for user_in_photo in entry['users_in_photo']:
+                new_media.users_in_photo.append(UserInPhoto.object_from_dictionary(user_in_photo))
+        
         if entry['location'] and 'id' in entry:
             new_media.location = Location.object_from_dictionary(entry['location'])
 
@@ -139,6 +150,7 @@ class Comment(ApiModel):
     @classmethod
     def object_from_dictionary(cls, entry):
         user = User.object_from_dictionary(entry['from'])
+        user._api_dict = entry
         text = entry['text']
         created_at = timestamp_to_datetime(entry['created_time'])
         id = entry['id']
@@ -172,6 +184,7 @@ class Location(ApiModel):
         location = Location(entry.get('id', 0),
                        point=point,
                        name=entry.get('name', ''))
+        location._api_dict = entry
         return location
 
     def __unicode__(self):
@@ -201,3 +214,41 @@ class Relationship(ApiModel):
         followed = False if self.incoming_status == 'none' else True
 
         return "Relationship: (Follows: %s, Followed by: %s)" % (follows, followed)
+
+
+
+class Position(ApiModel):
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __unicode__(self):
+        return "Position: (%s, %s)" % (self.x, self.y)
+
+    @classmethod
+    def object_from_dictionary(cls, entry):
+        if 'x' in entry:
+            position = Position(entry['x'], entry['y'])
+            position._api_dict = entry
+            return position
+
+
+class UserInPhoto(ApiModel):
+    def __init__(self, user, position):
+        self.position = position
+        self.user = user
+
+    def __unicode__(self):
+        return "UserInPhoto: (%s, %s)" % (self.user, self.position)
+
+    @classmethod
+    def object_from_dictionary(cls, entry):
+        user = None
+        if 'user' in entry:
+            user = User.object_from_dictionary(entry['user'])
+
+        if 'position' in entry:
+            position = Position(entry['position']['x'], entry['position']['y'])
+        user_in_photo = UserInPhoto(user, position)
+        user_in_photo._api_dict = entry
+        return user_in_photo
