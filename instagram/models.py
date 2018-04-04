@@ -199,8 +199,9 @@ class Location(ApiModel):
 
 
 class User(ApiModel):
-
-    def __init__(self, id, *args, **kwargs):
+    #HOTFIX 2018-04-04: id is missing
+    #def __init__(self, id, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.id = id
         for key, value in kwargs.iteritems():
             setattr(self, key, value)
