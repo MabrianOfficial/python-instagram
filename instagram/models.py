@@ -76,9 +76,15 @@ class Media(ApiModel):
         new_media = Media(id=entry['id'])
         new_media._api_dict = entry
         new_media.type = entry['type']
-
-        new_media.user = User.object_from_dictionary(entry['user'])
-
+        #HOTFIX 2018-04-04: user.id is missing
+        _user = entry['user']
+        try:
+            user_id = entry['id'].split('_')[1]
+        except IndexError:
+            user_id = None
+        _user['id'] = user_id
+        new_media.user = User.object_from_dictionary(_user)
+        
         new_media.images = {}
         #2017-02-23: http://stackoverflow.com/questions/42456908/instagram-api-missing-elements-in-json-response
         for version, version_info in entry.get('images',{}).iteritems():
@@ -199,10 +205,9 @@ class Location(ApiModel):
 
 
 class User(ApiModel):
-    #HOTFIX 2018-04-04: id is missing
+    #HOTFIX 2018-04-04: user.id is missing
     #def __init__(self, id, *args, **kwargs):
     def __init__(self, *args, **kwargs):
-        self.id = id
         for key, value in kwargs.iteritems():
             setattr(self, key, value)
 
